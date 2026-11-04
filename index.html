@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#173b32">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>Moje spotřeba</title>
+<style>
+:root{--bg:#f3f6f4;--card:#fff;--ink:#17231f;--muted:#64736c;--green:#176b4b;--line:#e2e9e4}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px system-ui,-apple-system,Segoe UI,sans-serif}
+header{background:#173b32;color:white;padding:22px 18px 26px;border-radius:0 0 22px 22px}
+header small{opacity:.8}h1{font-size:24px;margin:4px 0 0}.wrap{max-width:760px;margin:auto;padding:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0;box-shadow:0 2px 8px #10251a08}
+.hero{display:flex;justify-content:space-between;gap:12px;align-items:center}.big{font-size:32px;font-weight:750;color:var(--green);letter-spacing:-1px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.stat{background:#f5f8f6;border-radius:12px;padding:12px}.stat b{display:block;font-size:21px}.muted,small{color:var(--muted)}label{display:block;font-size:14px;font-weight:650;margin:12px 0 5px}
+input,select,button{font:inherit}input,select{width:100%;padding:12px;border:1px solid #cbd8d0;border-radius:10px;background:white;color:var(--ink)}
+button{border:0;border-radius:11px;padding:12px 15px;font-weight:700;cursor:pointer}.primary{background:var(--green);color:white;width:100%;margin-top:14px}.secondary{background:#eaf2ed;color:#174b37}.danger{background:#fff0ee;color:#9c2d21}.tabs{display:flex;gap:7px;overflow:auto}.tabs button{background:#e8efea;color:#29463a;white-space:nowrap}.tabs button.active{background:#173b32;color:white}
+.row{display:flex;justify-content:space-between;gap:10px;align-items:center}.trip{border-top:1px solid var(--line);padding:12px 0}.trip:first-child{border-top:0}.trip strong{display:block}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.hidden{display:none!important}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:18px}
+@media(min-width:600px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><small>SLEDOVÁNÍ JÍZD A NÁKLADŮ</small><h1>Moje spotřeba</h1></div></header>
+<main class="wrap">
+<section class="card">
+ <div class="hero"><div><small>Průměrná spotřeba</small><div class="big" id="overallAvg">— l/100 km</div></div><div style="text-align:right"><small>Celkové náklady</small><div class="big" style="font-size:25px" id="overallCost">0 Kč</div></div></div>
+ <div class="grid" style="margin-top:14px">
+  <div class="stat"><small>Ujeto celkem</small><b id="totalKm">0 km</b></div>
+  <div class="stat"><small>Spotřebováno</small><b id="totalLitres">0 l</b></div>
+  <div class="stat"><small>Průměrná cena</small><b id="cost100">0 Kč/100 km</b></div>
+  <div class="stat"><small>Počet jízd</small><b id="rideCount">0</b></div>
+ </div>
+</section>
+<section class="card">
+ <h2 style="font-size:19px;margin:0 0 8px">Zaznamenat jízdu</h2>
+ <label for="date">Datum</label><input id="date" type="date">
+ <label for="direction">Typ jízdy</label>
+ <select id="direction"><option value="work">Do práce (70 km)</option><option value="home">Z práce (70 km)</option><option value="other">Jiná jízda</option></select>
+ <div id="distanceWrap" class="hidden"><label for="distance">Vzdálenost (km)</label><input id="distance" type="number" min="0.1" step="0.1" value="10"></div>
+ <label for="consumption">Průměrná spotřeba (l/100 km)</label><input id="consumption" type="number" min="0.1" step="0.1" placeholder="Např. 6,4">
+ <button class="primary" id="save">Uložit jízdu</button>
+ <small id="formNote">Přednastavená vzdálenost: 70 km. Uložená jízda si uchová tehdejší cenu nafty.</small>
+</section>
+<section class="card">
+ <div class="row"><h2 style="font-size:19px;margin:0">Přehled období</h2></div>
+ <div class="tabs" style="margin:12px 0">
+  <button data-period="day">Dnes</button><button data-period="week" class="active">Týden</button><button data-period="month">Měsíc</button><button data-period="all">Celkem</button>
+ </div>
+ <div class="grid">
+  <div class="stat"><small>Průměr</small><b id="periodAvg">—</b></div>
+  <div class="stat"><small>Náklady</small><b id="periodCost">0 Kč</b></div>
+  <div class="stat"><small>Vzdálenost</small><b id="periodKm">0 km</b></div>
+  <div class="stat"><small>Palivo</small><b id="periodLitres">0 l</b></div>
+ </div>
+</section>
+<section class="card">
+ <div class="row"><h2 style="font-size:19px;margin:0">Historie jízd</h2><span class="muted" id="historyCount"></span></div>
+ <div id="history" style="margin-top:8px"><p class="muted">Zatím tu nejsou žádné jízdy.</p></div>
+</section>
+<section class="card">
+ <h2 style="font-size:19px;margin:0">Nastavení</h2>
+ <div class="grid">
+  <div><label for="toWork">Do práce (km)</label><input id="toWork" type="number" min="0.1" step="0.1" value="70"></div>
+  <div><label for="fromWork">Z práce (km)</label><input id="fromWork" type="number" min="0.1" step="0.1" value="70"></div>
+ </div>
+ <label for="fuelPrice">Cena nafty (Kč/l)</label><input id="fuelPrice" type="number" min="0.1" step="0.1" value="48">
+ <button class="secondary" id="settingsSave" style="margin-top:12px">Uložit nastavení</button>
+ <div class="actions">
+  <button class="secondary" id="export">Exportovat zálohu</button>
+  <button class="secondary" id="importBtn">Importovat zálohu</button>
+  <input id="importFile" type="file" accept="application/json" class="hidden">
+ </div>
+ <small>Data se ukládají v tomto prohlížeči v telefonu. Pravidelně si exportuj zálohu, zejména před výměnou telefonu nebo vymazáním dat prohlížeče.</small>
+</section>
+<footer>Výpočty jsou orientační. Náklady se zaokrouhlují na nejbližších 10 Kč.</footer>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const KEY='mojeSpotreba_v1';
+let state=JSON.parse(localStorage.getItem(KEY)||'null')||{settings:{toWork:70,fromWork:70,price:48},rides:[]};
+let period='week';
+const today=()=>new Date().toISOString().slice(0,10);
+$('date').value=today();
+function persist(){localStorage.setItem(KEY,JSON.stringify(state))}
+function round10(n){return Math.round(n/10)*10}
+function money(n){return round10(n).toLocaleString('cs-CZ')+' Kč'}
+function num(n,d=1){return Number(n).toLocaleString('cs-CZ',{maximumFractionDigits:d})}
+function stats(rides){let km=rides.reduce((s,r)=>s+r.km,0),litres=rides.reduce((s,r)=>s+r.km*r.consumption/100,0),cost=rides.reduce((s,r)=>s+r.km*r.consumption/100*r.price,0);return {km,litres,cost,avg:km?litres/km*100:0}}
+function inPeriod(date,p){let d=new Date(date+'T12:00:00'),now=new Date();if(p==='all')return true;if(p==='day')return date===today();if(p==='month')return d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth();let start=new Date(now);let day=(start.getDay()+6)%7;start.setDate(start.getDate()-day);start.setHours(0,0,0,0);return d>=start&&d<=now}
+function render(){
+ let s=stats(state.rides);$('overallAvg').textContent=s.km?num(s.avg,2)+' l/100 km':'— l/100 km';$('overallCost').textContent=money(s.cost);$('totalKm').textContent=num(s.km)+' km';$('totalLitres').textContent=num(s.litres)+' l';$('cost100').textContent=s.km?money(s.cost/s.km*100)+'/100 km':'0 Kč/100 km';$('rideCount').textContent=state.rides.length;
+ let ps=stats(state.rides.filter(r=>inPeriod(r.date,period)));$('periodAvg').textContent=ps.km?num(ps.avg,2)+' l/100 km':'—';$('periodCost').textContent=money(ps.cost);$('periodKm').textContent=num(ps.km)+' km';$('periodLitres').textContent=num(ps.litres)+' l';
+ document.querySelectorAll('[data-period]').forEach(b=>b.classList.toggle('active',b.dataset.period===period));
+ $('historyCount').textContent=state.rides.length+' jízd';
+ let h=[...state.rides].sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
+ $('history').innerHTML=h.length?h.map(r=>`<div class="trip"><div class="row"><div><strong>${r.label} · ${num(r.consumption,1)} l/100 km</strong><small>${r.date} · ${num(r.km)} km · ${num(r.km*r.consumption/100)} l</small></div><div style="text-align:right"><strong>${money(r.km*r.consumption/100*r.price)}</strong><small>${num(r.price,1)} Kč/l</small></div></div><div class="actions"><button class="danger" onclick="removeRide(${r.id})">Smazat</button></div></div>`).join(''):'<p class="muted">Zatím tu nejsou žádné jízdy.</p>';
+ $('toWork').value=state.settings.toWork;$('fromWork').value=state.settings.fromWork;$('fuelPrice').value=state.settings.price;
+}
+window.removeRide=id=>{if(confirm('Opravdu smazat tuto jízdu?')){state.rides=state.rides.filter(r=>r.id!==id);persist();render()}};
+$('direction').addEventListener('change',()=>{$('distanceWrap').classList.toggle('hidden',$('direction').value!=='other')});
+$('save').onclick=()=>{
+ let dir=$('direction').value,km=dir==='work'?Number(state.settings.toWork):dir==='home'?Number(state.settings.fromWork):Number($('distance').value),c=Number($('consumption').value);
+ if(!km||km<=0||!c||c<=0||c>100){alert('Zadej platnou vzdálenost a spotřebu.');return}
+ let label=dir==='work'?'Do práce':dir==='home'?'Z práce':'Jiná jízda';
+ state.rides.push({id:Date.now(),date:$('date').value||today(),label,km,consumption:c,price:Number(state.settings.price)});
+ persist();$('consumption').value='';$('date').value=today();$('direction').value='work';$('distanceWrap').classList.add('hidden');render();
+};
+document.querySelectorAll('[data-period]').forEach(b=>b.onclick=()=>{period=b.dataset.period;render()});
+$('settingsSave').onclick=()=>{let a=Number($('toWork').value),b=Number($('fromWork').value),p=Number($('fuelPrice').value);if(a<=0||b<=0||p<=0){alert('Zadej kladné hodnoty.');return}state.settings={toWork:a,fromWork:b,price:p};persist();render();alert('Nastavení uloženo. Nové jízdy použijí novou cenu; starší záznamy zůstanou beze změny.')};
+$('export').onclick=()=>{let blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='zaloha-spotreba-'+today()+'.json';a.click();URL.revokeObjectURL(a.href)};
+$('importBtn').onclick=()=>$('importFile').click();
+$('importFile').onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let x=JSON.parse(await f.text());if(!x.settings||!Array.isArray(x.rides))throw Error();if(confirm('Import nahradí současná data. Pokračovat?')){state=x;persist();render()}}catch{alert('Soubor zálohy není platný.')}e.target.value=''};
+render();
+if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+</script>
+</body></html>
